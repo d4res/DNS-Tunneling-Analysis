@@ -1,0 +1,15 @@
+syntax = "proto3";
+option go_package = ".;proto";
+
+service DNSProcessor {
+    rpc IsEval (Request) returns (Response) {
+    }
+}
+
+message Request {
+    string domain = 1;
+}
+
+message Response {
+    bool res = 1;
+}
