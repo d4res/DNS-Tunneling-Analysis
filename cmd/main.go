@@ -108,8 +108,8 @@ func main() {
 
 				// now considering TXT, MX, CNAME
 				switch v.Type {
-				case layers.DNSTypeA:
-					payload = v.IP.String()
+				case layers.DNSTypeTXT:
+					payload = string(v.TXT)
 				case layers.DNSTypeCNAME:
 					payload = string(v.CNAME)
 				case layers.DNSTypeMX:
@@ -121,19 +121,33 @@ func main() {
 				isEval = proto.IsEval(payload)
 				data.Tag = isEval
 				data.Payload = payload
-				msg := decode.ParseMsg(decode.TransDomain(data.Payload, "sub.dares.top"))
-				fmt.Println(msg)
+
+				if isEval {
+					fmt.Println("this is eval")
+					fmt.Println(data.Payload)
+					msg, err := decode.ParseMsg(decode.TransDomain(data.Payload, "sub.dares.top"))
+
+					if msg.Payload != nil && err != nil {
+						infoCol.InsertOne(context.TODO(), msg)
+					}
+				}
+
 				responseCol.InsertOne(context.TODO(), data)
 			}
 		} else {
 			// this is request
 			for _, v := range dns.Questions {
-				fmt.Println("request", string(v.Name))
+
 				tag := proto.IsEval(string(v.Name))
 				data := model.Request{Class: v.Class.String(), Type: v.Type.String(), Payload: string(v.Name), Tag: tag, Time: time.Now()}
-				msg := decode.ParseMsg(decode.TransDomain(data.Payload, "sub.dares.top"))
-				infoCol.InsertOne(context.TODO(), msg)
-				fmt.Println(msg)
+
+				if tag {
+					msg, err := decode.ParseMsg(decode.TransDomain(data.Payload, "sub.dares.top"))
+					if msg.Payload != nil && err != nil {
+						infoCol.InsertOne(context.TODO(), msg)
+					}
+				}
+
 				requestCol.InsertOne(context.TODO(), data)
 			}
 		}

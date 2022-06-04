@@ -3,7 +3,6 @@ package decode
 import (
 	"encoding/binary"
 	"encoding/hex"
-	"fmt"
 )
 
 const (
@@ -12,13 +11,9 @@ const (
 )
 
 type SYNBody struct {
-	seq     []byte
-	options []byte
-	name    string
-}
-
-func (body SYNBody) String() string {
-	return fmt.Sprintf("seq: %s, options: %s, name: %s", hex.EncodeToString(body.seq), hex.EncodeToString(body.options), body.name)
+	Seq     string
+	Options string
+	Name    string
 }
 
 func parseSYN(data []byte) SYNBody {
@@ -38,5 +33,5 @@ func parseSYN(data []byte) SYNBody {
 		name = "[unnamed]"
 	}
 
-	return SYNBody{seq, options, name}
+	return SYNBody{hex.EncodeToString(seq), hex.EncodeToString(options), name}
 }
