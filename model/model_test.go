@@ -2,7 +2,9 @@ package model
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"testing"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -38,4 +40,32 @@ func TestTime(t *testing.T) {
 	var res Request
 	col.FindOne(context.TODO(), bson.D{}).Decode(&res)
 	fmt.Println(res.Time.Local())
+}
+
+func TestInfo(t *testing.T) {
+	client, err := Conn()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Disconnect(context.TODO())
+	infoCol := client.Database("dns_pcap").Collection("info")
+	cur, err := infoCol.Find(context.TODO(), bson.D{})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for cur.Next(context.Background()) {
+		var result bson.D
+		err := cur.Decode(&result)
+		if err != nil {
+			log.Fatal(err)
+		}
+		r, _ := bson.MarshalExtJSON(result, false, false)
+
+		var json_data any
+		json.Unmarshal(r, json_data)
+		fmt.Printf("%T\n", json_data)
+		break
+	}
 }

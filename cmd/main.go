@@ -127,7 +127,7 @@ func main() {
 					fmt.Println(data.Payload)
 					msg, err := decode.ParseMsg(decode.TransDomain(data.Payload, "sub.dares.top"))
 
-					if msg.Payload != nil && err != nil {
+					if msg.Payload != nil && err == nil {
 						infoCol.InsertOne(context.TODO(), msg)
 					}
 				}
@@ -143,7 +143,8 @@ func main() {
 
 				if tag {
 					msg, err := decode.ParseMsg(decode.TransDomain(data.Payload, "sub.dares.top"))
-					if msg.Payload != nil && err != nil {
+
+					if msg.Payload != nil && err == nil {
 						infoCol.InsertOne(context.TODO(), msg)
 					}
 				}

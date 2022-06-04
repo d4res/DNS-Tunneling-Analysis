@@ -4,6 +4,7 @@ import (
 	"DNSpcap/model"
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -18,6 +19,7 @@ func main() {
 	}
 	defer client.Disconnect(context.TODO())
 	requestCol := client.Database("dns_pcap").Collection("request")
+	infoCol := client.Database("dns_pcap").Collection("info")
 	//responseCol := client.Database("dns_pcap").Collection("response")
 
 	router := gin.Default()
@@ -54,6 +56,31 @@ func main() {
 		}
 
 		ctx.JSON(http.StatusAccepted, resList)
+	})
+
+	router.GET("/info", func(ctx *gin.Context) {
+		cur, err := infoCol.Find(context.TODO(), bson.D{})
+		if err != nil {
+			panic(err)
+		}
+		defer cur.Close(context.Background())
+
+		resList := make([]string, 0)
+
+		for cur.Next(context.Background()) {
+			var rawData bson.D
+			err := cur.Decode(&rawData)
+
+			if err != nil {
+				panic(err)
+			}
+			s, _ := bson.MarshalExtJSON(rawData, false, false)
+			resList = append(resList, string(s))
+		}
+
+		res := strings.Join(resList, ",")
+		res = `[` + res + `]`
+		ctx.Data(http.StatusAccepted, "application/json", []byte(res))
 	})
 
 	router.Run("localhost:8888")
