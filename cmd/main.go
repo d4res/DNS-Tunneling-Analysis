@@ -1,6 +1,7 @@
 package main
 
 import (
+	"DNSpcap/decode"
 	"DNSpcap/model"
 	"DNSpcap/proto"
 	"context"
@@ -32,6 +33,7 @@ func main() {
 	defer client.Disconnect(context.TODO())
 	requestCol := client.Database("dns_pcap").Collection("request")
 	responseCol := client.Database("dns_pcap").Collection("response")
+	infoCol := client.Database("dns_pcap").Collection("info")
 
 	devices, err := pcap.FindAllDevs()
 	if err != nil {
@@ -95,9 +97,8 @@ func main() {
 
 		// request 0; response 1
 		if dns.QR {
+			// this is response
 			for _, v := range dns.Answers {
-				///fmt.Println(v)
-
 				var data model.Response
 				data.Class = v.Class.String()
 				data.Type = v.Type.String()
@@ -120,16 +121,19 @@ func main() {
 				isEval = proto.IsEval(payload)
 				data.Tag = isEval
 				data.Payload = payload
-
+				msg := decode.ParseMsg(decode.TransDomain(data.Payload, "sub.dares.top"))
+				fmt.Println(msg)
 				responseCol.InsertOne(context.TODO(), data)
-				//fmt.Printf("%s %s %s\n", v.)
 			}
 		} else {
-
+			// this is request
 			for _, v := range dns.Questions {
 				fmt.Println("request", string(v.Name))
 				tag := proto.IsEval(string(v.Name))
 				data := model.Request{Class: v.Class.String(), Type: v.Type.String(), Payload: string(v.Name), Tag: tag, Time: time.Now()}
+				msg := decode.ParseMsg(decode.TransDomain(data.Payload, "sub.dares.top"))
+				infoCol.InsertOne(context.TODO(), msg)
+				fmt.Println(msg)
 				requestCol.InsertOne(context.TODO(), data)
 			}
 		}
