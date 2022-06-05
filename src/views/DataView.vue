@@ -1,6 +1,6 @@
 <template>
 
-<el-table :data="data" max-height="1000"> 
+<el-table :data="data" max-height="1000"  > 
     <el-table-column prop="payload" label="内容"></el-table-column>
     <el-table-column prop="time" label="时间"> </el-table-column>
     <el-table-column label="标签">

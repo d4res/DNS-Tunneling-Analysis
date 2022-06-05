@@ -1,22 +1,20 @@
 <template>
+<div>
   <el-container>
     <el-header class="header" >
       DNS流量检测
     </el-header>
 
     <el-container>
-    <el-aside width="100px">
+    <el-aside width="100px" >
       <el-menu
       router="true"
       >
       <el-menu-item index="dashboard">导航</el-menu-item>
-
       <el-menu-item index="data">原始数据</el-menu-item>
+      <el-menu-item index="metric">统计数据</el-menu-item>
+      <el-menu-item index="info">报文解析</el-menu-item>
 
-      <el-menu-item index="about">关于</el-menu-item>
-
-      <el-menu-item index="test">测试页面</el-menu-item>
-      
       </el-menu>
     </el-aside>
 
@@ -25,6 +23,8 @@
     </el-main> 
     </el-container>
   </el-container>
+  </div>
+
 </template>
 
 <style>
@@ -34,8 +34,6 @@
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  /* width: 100%; */
-  /* margin: 0; */
 }
 
 body {
