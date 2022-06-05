@@ -69,3 +69,28 @@ func TestInfo(t *testing.T) {
 		break
 	}
 }
+
+func TestCount(t *testing.T) {
+	client, err := Conn()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Disconnect(context.TODO())
+
+	requestClient := client.Database("dns_pcap").Collection("request")
+	ans, _ := requestClient.CountDocuments(context.Background(), bson.D{{Key: "type", Value: "MX"}})
+	fmt.Println(ans)
+}
+
+func TestMetric(t *testing.T) {
+	client, err := Conn()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Disconnect(context.TODO())
+
+	col := client.Database("dns_pcap").Collection("request")
+
+	m := GetMetric(col)
+	fmt.Println(m)
+}

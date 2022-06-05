@@ -83,5 +83,9 @@ func main() {
 		ctx.Data(http.StatusAccepted, "application/json", []byte(res))
 	})
 
+	router.GET("/metric", func(ctx *gin.Context) {
+		m := model.GetMetric(requestCol)
+		ctx.JSON(http.StatusOK, m)
+	})
 	router.Run("localhost:8888")
 }
