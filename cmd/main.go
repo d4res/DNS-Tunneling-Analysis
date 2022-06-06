@@ -5,24 +5,11 @@ import (
 	"DNSpcap/model"
 	"DNSpcap/proto"
 	"context"
-	"fmt"
-	"log"
 	"time"
 
-	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
-	"github.com/google/gopacket/pcap"
-)
 
-var (
-	iface   = "enp0s3"
-	snaplen = int32(1600)
-	promisc = false
-	timeout = pcap.BlockForever
-	// setting the BPF filter, look up: https://www.ibm.com/docs/en/qsip/7.4?topic=queries-berkeley-packet-filters.
-	// here, we shall capture all udp packets through port 53
-	filter   = "udp and port 53"
-	devFound = false
+	pcapWrap "DNSpcap/pcap"
 )
 
 func main() {
@@ -35,63 +22,37 @@ func main() {
 	responseCol := client.Database("dns_pcap").Collection("response")
 	infoCol := client.Database("dns_pcap").Collection("info")
 
-	devices, err := pcap.FindAllDevs()
-	if err != nil {
-		log.Panicln(err)
-	}
+	// devices, err := pcap.FindAllDevs()
+	// if err != nil {
+	// 	log.Panicln(err)
+	// }
 
-	for _, device := range devices {
-		if device.Name == iface {
-			devFound = true
-		}
-	}
-	if !devFound {
-		log.Panicf("Device named '%s' does not exist\n", iface)
-	}
+	// for _, device := range devices {
+	// 	if device.Name == iface {
+	// 		devFound = true
+	// 	}
+	// }
+	// if !devFound {
+	// 	log.Panicf("Device named '%s' does not exist\n", iface)
+	// }
 
-	handle, err := pcap.OpenLive(iface, snaplen, promisc, timeout)
-	if err != nil {
-		log.Panicln(err)
-	}
+	// handle, err := pcap.OpenLive(iface, snaplen, promisc, timeout)
+	// if err != nil {
+	// 	log.Panicln(err)
+	// }
+	// defer handle.Close()
+
+	// if err := handle.SetBPFFilter(filter); err != nil {
+	// 	log.Panicln(err)
+	// }
+
+	source, handle, err := pcapWrap.NewSource()
 	defer handle.Close()
-
-	if err := handle.SetBPFFilter(filter); err != nil {
-		log.Panicln(err)
+	if err != nil {
+		panic(err)
 	}
-
-	source := gopacket.NewPacketSource(handle, handle.LinkType())
+	//source := gopacket.NewPacketSource(handle, handle.LinkType())
 	for packet := range source.Packets() {
-		// fmt.Println(packet.Dump())
-		//fmt.Println(packet)
-
-		// DNS is specified in RFC 1034 / RFC 1035
-		// +---------------------+
-		// |        Header       |
-		// +---------------------+
-		// |       Question      | the question for the name server
-		// +---------------------+
-		// |        Answer       | RRs answering the question
-		// +---------------------+
-		// |      Authority      | RRs pointing toward an authority
-		// +---------------------+
-		// |      Additional     | RRs holding additional information
-		// +---------------------+
-		//
-		//  DNS Header
-		//  0  1  2  3  4  5  6  7  8  9  0  1  2  3  4  5
-		//  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-		//  |                      ID                       |
-		//  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-		//  |QR|   Opcode  |AA|TC|RD|RA|   Z    |   RCODE   |
-		//  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-		//  |                    QDCOUNT                    |
-		//  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-		//  |                    ANCOUNT                    |
-		//  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-		//  |                    NSCOUNT                    |
-		//  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
-		//  |                    ARCOUNT                    |
-		//  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 		dnsLayer := packet.Layer(layers.LayerTypeDNS)
 		dns := dnsLayer.(*layers.DNS)
 
@@ -123,8 +84,6 @@ func main() {
 				data.Payload = payload
 
 				if isEval {
-					fmt.Println("this is eval")
-					fmt.Println(data.Payload)
 					msg, err := decode.ParseMsg(decode.TransDomain(data.Payload, "sub.dares.top"))
 
 					if msg.Payload != nil && err == nil {
